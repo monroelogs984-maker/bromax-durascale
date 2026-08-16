@@ -1,0 +1,24 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+    modId = "bromax_durascale"
+    version = "1.0.0"
+    displayName = "BROMAX's Durascale"
+    description = "Multiplies all item durability by a configurable value."
+    authors = "BROMAX"
+
+[[dependencies.bromax_durascale]]
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[21.1,)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.bromax_durascale]]
+    modId = "minecraft"
+    type = "required"
+    versionRange = "[1.21.1,)"
+    ordering = "NONE"
+    side = "BOTH"
