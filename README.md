@@ -2,4 +2,4 @@
 
 Multiplies all item durability by a configurable value.
 
-Minecraft 1.21.1, NeoForge. MIT license.
+Minecraft 1.20.1, Forge. MIT license.

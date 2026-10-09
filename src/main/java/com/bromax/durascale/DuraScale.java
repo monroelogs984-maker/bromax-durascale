@@ -1,14 +1,13 @@
 package com.bromax.durascale;
 
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,9 +19,9 @@ public class DuraScale {
     public static final String MODID = "bromax_durascale";
     private static final Logger LOGGER = LogManager.getLogger(MODID);
 
-    public DuraScale(IEventBus modBus, ModContainer container) {
-        container.registerConfig(ModConfig.Type.COMMON, DuraScaleConfig.SPEC);
-        modBus.addListener(this::setup);
+    public DuraScale() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, DuraScaleConfig.SPEC);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
     }
 
     private void setup(FMLCommonSetupEvent event) {
@@ -34,24 +33,17 @@ public class DuraScale {
         int modified = 0;
 
         try {
-            Field componentsField = Item.class.getDeclaredField("components");
-            componentsField.setAccessible(true);
+            // Item.maxDamage (SRG f_41371_) is a private final int in 1.20.1
+            Field maxDamageField = ObfuscationReflectionHelper.findField(Item.class, "f_41371_");
 
-            for (Item item : BuiltInRegistries.ITEM) {
-                DataComponentMap original = (DataComponentMap) componentsField.get(item);
-                Integer maxDamage = original.get(DataComponents.MAX_DAMAGE);
-                if (maxDamage == null || maxDamage <= 0) continue;
+            for (Item item : ForgeRegistries.ITEMS) {
+                int maxDamage = maxDamageField.getInt(item);
+                if (maxDamage <= 0) continue;
 
-                int newDamage = (int) Math.round(maxDamage * multiplier);
-                DataComponentMap updated = DataComponentMap.builder()
-                        .addAll(original)
-                        .set(DataComponents.MAX_DAMAGE, newDamage)
-                        .build();
-
-                componentsField.set(item, updated);
+                maxDamageField.setInt(item, (int) Math.round(maxDamage * multiplier));
                 modified++;
             }
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (Exception e) {
             LOGGER.error("[DuraScale] Failed to apply durability multiplier: {}", e.getMessage());
             return;
         }
